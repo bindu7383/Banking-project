@@ -1,0 +1,48 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('git checkout') {
+            steps {
+                git 'https://github.com/bindu7383/Banking-project.git'
+            }
+        }
+        stage('build maven') {
+            steps {
+                sh'mvn clean package'
+            }
+        }
+        stage('build docker image') {
+            steps {
+                sh 'docker build -t yogesha/bankingdemo:1.0 .'
+                
+            }
+        }
+        stage('docker image push to docker hub') {
+            steps {
+                withCredentials([string(credentialsId: 'docker-hub', variable: 'dockerpassword')]) {
+                sh "docker login -u yogesha -p ${dockerpassword}"
+                sh 'docker push yogesha/bankingdemo:1.0'
+                }
+                
+            }
+        }
+        stage('configure and deploy into the test server') {
+            steps {
+                ansiblePlaybook become: true, credentialsId: 'sshkey', disableHostKeyChecking: true, installation: 'Ansible', inventory: '/etc/ansible/hosts/', playbook: 'configure-test-server.yml'
+            }
+        }
+        stage('run the selenium runnable jar') {
+            steps {
+                sh 'java -jar selenium-test.jar'
+            }
+        }
+        stage('configure and deploy into the prod server') {
+            steps {
+                ansiblePlaybook become: true, credentialsId: 'sshkey', disableHostKeyChecking: true, installation: 'Ansible', inventory: '/etc/ansible/hosts/', playbook: 'configure-prod-server.yml'
+            }
+        }
+            
+        
+    }
+}
