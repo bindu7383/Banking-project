@@ -16,4 +16,4 @@
     command: sudo docker rm -f my-banking
 
   - name: Deploy Docker Container
-    command: docker run -itd -p 8081:8081 --name my-banking bindukj/bankingdemo:1.0
+    command: docker run -itd -p 8081:8081 --name my-banking yogesha/bankingdemo:1.0
